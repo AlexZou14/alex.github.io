@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>秩同道合的小站</title>
+  
+  
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://alexzou14.github.io/"/>
+  <updated>2020-04-02T09:34:32.089Z</updated>
+  <id>http://alexzou14.github.io/</id>
+  
+  <author>
+    <name>秩同道合</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>FSRNet：End-to-End Learning Face Super-Resolution with Facial Priors论文阅读笔记</title>
+    <link href="http://alexzou14.github.io/2020/04/02/FSRNet/"/>
+    <id>http://alexzou14.github.io/2020/04/02/FSRNet/</id>
+    <published>2020-04-02T09:03:11.000Z</published>
+    <updated>2020-04-02T09:34:32.089Z</updated>
+    
+    <content type="html"><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css"><script src="https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1/dist/Meting.min.js"></script><h3 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h3><p>人脸超分辨率是图像超分辨率的一个特殊任务，特别的人脸先验信息可以更好的被利用，还原出更好的超清图像。作者发现，现有的方法在恢复非常低的超分辨率人脸图像存在问题，恢复不清晰的情况。因此提出了一个端到端的训练方式和充分利用人脸的几何先验知识来组成的一个网络。该网络先构建了一个粗SR网络来恢复出一个粗高分辨率图片，再将粗HR图像送去两个分支网络中，一个是细SR编码，另一个是先验信息评估，细SR编码用来提取特征图，先验信息评估用来评价估计解析图。再将得到的特征图和先验信息送入细SR编码还原HR图像。为了生成更真实的图像，作者还提出了一个FSRGAN将对抗损失引入FSRNet中。</p><hr><h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>面部超分辨率（SR）是特定的一类图像超分辨率问题。目前大多数人脸图像超分辨算法是由通用的图像超分辨算法加以适当修改得到的。之前的面部超分辨率方法大多是由通用的图像超分辨率算法加以适当修改得到的，大多数没有加人脸先验知识，所以导致恢复效果不好。并且用于人脸超分辨率的图像不是端到端的训练。这篇文章受到人脸几何先验和端到端的训练的启发，提出了一个端到端的深度可训练面部超分辨网络，充分利用人脸图像的几何先验信息，即面部landmark的heatmap和人脸解析图，来对低分辨率人脸图像进行超分辨率。<br>本文主要贡献有：</p><ul><li>第一个提出用人脸几何先验的知识进行端到端学习的人脸超分辨率方法。</li><li>同时引入了两种几何先验，face landmark 和面部解析</li><li>提出的FSRnet在模糊未对齐和非常低的分辨率的图像，通过8倍放大，是目前最好的水平。同时用FSRnetGAN网络可以进一步生成更加逼真的images。</li><li>对于人脸超分辨率，人脸对齐和面部解析 最为新的评价标准。进一步证明，该方法可以解决传统的视觉感知度量方法的不一致性。</li></ul><p>选择形状作为先验的两种考虑：首先，当分辨率从高到低时，形状比纹理保存得更好，因此更有可能被提取出来以提高超分辨率。形状的表示要比纹理的表示好一些 。人脸解析 是不同人脸组成的分割估计。</p><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-03-26/5e7c114a3c0a8.png" alt="FSRNet1" loading="lazy"></p></blockquote><hr><h3 id="Related-work"><a href="#Related-work" class="headerlink" title="Related work"></a>Related work</h3><h4 id="Facial-Prior-Knowledge"><a href="#Facial-Prior-Knowledge" class="headerlink" title="Facial Prior Knowledge"></a>Facial Prior Knowledge</h4><p>有很多使用了人脸先验信息的人脸超分方法，都是为了更好的从低分辨率图像恢复成高分辨率图像。但是早期的方法在低放缩倍率下估计人脸先验是非常困难的。随着近期深度卷积网络在人脸超分上的引用成功， 宋等人提出了一种两阶段的方法，首先生成面部COMP由CNNs合成，然后通过成分增强方法合成细粒度的面部结构。与上述方法不同的是，我们的FSRNet完全LEV 擦除面部地标热图和解析地图的端到端培训方式。</p><h4 id="End-to-end-Training"><a href="#End-to-end-Training" class="headerlink" title="End-to-end Training"></a>End-to-end Training</h4><p>端到端的训练模式被广泛运用在一般的图像超分问题中，DRRN的提出有效的解决了网络参数数量和网络准确率的问题。与上述仅依靠深层模型力量的方法不同，我们的FSRNet不仅是一个端到端的可训练神经网络，而且结合了来自人脸先验的丰富信息，更好的将低分辨率人脸图像还原成高分辨率图像。</p><hr><h3 id="Proposed-Method"><a href="#Proposed-Method" class="headerlink" title="Proposed Method"></a>Proposed Method</h3><h4 id="Network-structure"><a href="#Network-structure" class="headerlink" title="Network structure"></a>Network structure</h4><p>网络结构如下图：</p><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-03-26/5e7c16555126e.png" alt="FSRNet2" loading="lazy"></p></blockquote><p>FSRNet是由四个部分组成：coarse SR network, fine SR encoder, prior estimation network和fine SR decoder</p><p>粗SR网络将输入的LR图像初步还原成一个粗SR图像,这个粗SR网络可以表达成：$$y_c=C(\text{x})$$<br><strong>先验信息估计网络</strong>：从最近成功的叠加热图回归在人体姿势估计中受到启发，文章提出在先验信息估计网络中使用一个 HourGlass 结构来估计面部landmark 的 heatmap 和解析图。因为这两个先验信息都可以表示 2D的人脸形状，所以在先验信息估计网络中，特征在两个任务之间是共享的， 除了最后一层。为了有效整合各种尺度的特征并保留不同尺度的空间信息，HourGlass block 在对称层之间使用 skip-connection 机制。最后，共享的 HG 特征连接到两个分离的 1×1 卷积层来生成 landmark heatmap和解析图。<br><strong>精细的SR编码器</strong>：受到 ResNet 在超分辨任务中的成功的启发，文章使用 residual block 进行特征提取。考虑到计算的开销，先验信息的特征会降采样到 64×64。为了使得特征尺寸一致，编码器首先经过一个 3×3，stride为 2 的卷积层来把特征图降采样到 64×64。然后再使用 ResNet 结构提取图像特征。</p><p>对应的先验评估网络P和细SR编码网络F分别可以表示成：<br>$$\text{p}=P(\text{y}_c)$$,$$\text{f}=F(\text{y}_c)$$<br><strong>精细的SR解码器</strong>：解码器把先验信息和图像特征组合为输入，首先将先验特征 p 和图像特征 f 进行concatenate，作为输入。然后通过 3×3 的卷积层把特征图的通道数减少为 64。然后一个 4×4 的反卷积层被用来把特征图的 size 上采样到 128×128。然后使用 3 个 residual block 来对特征进行解码。最后的 3×3 卷积层被用来得到最终的 HR 图像。</p><p>将coarse SRimages送入特征提取和先验估计网络中:<br>$$\text{y}=D(\text{f},\text{p})$$</p><h4 id="Loss-function"><a href="#Loss-function" class="headerlink" title="Loss function"></a>Loss function</h4><p>给定训练集：\( \{\text{x}^{(i)},\tilde{\text{y}}^{(i)},\tilde{\text{p}}^{(i)}\}_{i=1}^N \),FSRNet的损失函数为( \( \tilde{\text{y}},\tilde{\text{p}} \)为ground truth):</p><p>$$L_F(\Theta)=\dfrac{1}{2N}\sum_{i=1}^N { {\left|{\tilde{\text{y}}^{(i)}-\text{y}_c^{(i)}}\right|^2+\left|{\tilde{\text{y}}^{(i)}-\text{y}^{(i)}}\right|^2+\lambda\left|{\tilde{\text{p}}^{(i)}-\text{p}^{(i)}}\right|^2} } $$</p><h4 id="FSRGAN"><a href="#FSRGAN" class="headerlink" title="FSRGAN"></a>FSRGAN</h4><p>FSRGAN网络结构如下图：</p><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-03-26/5e7c1ea4770b2.png" alt="FSRNet3" loading="lazy"></p></blockquote><p>GAN LOSS为：$$L_C(\text{F,C})=\mathbb{E}[\log\text{C}(\tilde{\text{y}},\text{x})]+\mathbb{E}[\log(1-\text{C}({\text{F(x)}},\text{x}))]$$<br>感知损失为：$$L_P=\left|{\phi(\text{y})-\phi(\tilde\text{y})}\right|^2$$</p><hr><h3 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h3><h4 id="Implementation-Details"><a href="#Implementation-Details" class="headerlink" title="Implementation Details"></a>Implementation Details</h4><p>实验详情可以参考代码：<a href="https://github.com/cydiachen/FSRNET_pytorch" target="_blank" rel="noopener">https://github.com/cydiachen/FSRNET_pytorch</a></p><h4 id="Prior-Knowledge-for-Face-Super-Resolution"><a href="#Prior-Knowledge-for-Face-Super-Resolution" class="headerlink" title="Prior Knowledge for Face Super-Resolution"></a>Prior Knowledge for Face Super-Resolution</h4><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-03-26/5e7c20908f199.png" alt="FSRNet4" loading="lazy"><br><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-03-26/5e7c20a18f698.png" alt="FSRNet5" loading="lazy"></p></blockquote><p>把先验信息估计网络移除以后，构建了一个 Baseline 网络。基于 Baseline 网络，引入 ground truth 人脸先验信息（landmark heatmap 和解析图）到拼接层，得到一个新的网络。<br>结论：</p><ul><li>解析图比 landmark heatmap 含有更多人脸图像超分辨的信息，带来的提升更大；</li><li>全局的解析图比局部的解析图更有用；</li><li>landmark 数量增加所带来的提升很小</li></ul><h4 id="Network-analysis"><a href="#Network-analysis" class="headerlink" title="Network analysis"></a>Network analysis</h4><h5 id="Effects-of-Estimated-Priors"><a href="#Effects-of-Estimated-Priors" class="headerlink" title="Effects of Estimated Priors"></a>Effects of Estimated Priors</h5><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-03-26/5e7c2210976f2.png" alt="FSRNet6" loading="lazy"></p></blockquote><p>Baseline_v1：完全不包含先验信息<br>Baseline_v2：包含先验信息，但不进行监督训练<br>结论：</p><ol><li>即使不进行监督训练，先验信息也能帮助到SR任务，可能是因为先验信息提供了更多的高频信息。</li><li>越多先验信息，越好。</li><li>最佳性能为25.85dB，但是使用ground truth信息时，能达到26.55dB。说明估计得到的先验信息并不完美，更好的先验信息估计网络可能会得到更好的结果。</li></ol><h5 id="Effects-of-Hourglass-Numbers"><a href="#Effects-of-Hourglass-Numbers" class="headerlink" title="Effects of Hourglass Numbers"></a>Effects of Hourglass Numbers</h5><p>强大的先验信息预测网络会得到更好的结果，所以探究Hourglass数量h对网络性能的影响。分别取1，2，4，结果为25.69，25.87，25.95。<br>不同的Hourglass数量对landmark估计的影响：</p><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-03-26/5e7c2276370ed.png" alt="FSRNet7" loading="lazy"></p></blockquote><p>可以看到 h 数量增加时，先验信息估计网络结构越深，学习能力越强，性能越好。</p><h4 id="Comparisons-with-state-of-the-arts"><a href="#Comparisons-with-state-of-the-arts" class="headerlink" title="Comparisons with state-of-the-arts"></a>Comparisons with state-of-the-arts</h4><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-03-26/5e7c22b5ad9fa.png" alt="FSRNet8" loading="lazy"></p></blockquote><p>放大8倍后的性能比较，虽然FSRGAN的两项指标（PSNR/SSIM）都不如FSRNet，但是从视觉效果上看更加真实。这也与目前的一个共识相对应：基于生成对抗网络的模型可以恢复视觉上合理的图像，但是在一些指标上（PSNR , SSIM）的值会低。而基于MSE的深度模型会生成平滑的图像，但是有高的PSNR/SSIIM。</p><hr><h3 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions"></a>Conclusions</h3><ol><li>本文提出了深度端到端的可训练的人脸超分辨网络FSRNet</li><li>FSRNet的关键在于先验信息估计网络，这个网络不仅有助于改善PSNR/SSIM，还提供从非常低分辨率的图像精确估计几何先验信息（landmark heatmap和解析图）的解决方案。</li><li>实验结果表明FSRNet比当前的SOTA的方法要更好，即使在未对齐的人脸图像上。</li></ol><p>未来的工作可以有以下几个方面：</p><ol><li>设计一个更好的先验信息估计网络。</li><li>迭代地学习精细的SR网络。</li><li>调研其他有用的脸部先验信息。 </li></ol>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;link rel=&quot;stylesheet&quot; class=&quot;aplayer-secondary-style-marker&quot; href=&quot;https://cdn.jsdelivr.net/npm/aplayer@latest/dist/APlayer.min.css&quot;&gt;&lt;scrip
+      
+    
+    </summary>
+    
+    
+      <category term="论文笔记" scheme="http://alexzou14.github.io/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/"/>
+    
+    
+      <category term="深度学习" scheme="http://alexzou14.github.io/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/"/>
+    
+      <category term="笔记" scheme="http://alexzou14.github.io/tags/%E7%AC%94%E8%AE%B0/"/>
+    
+      <category term="超分辨率" scheme="http://alexzou14.github.io/tags/%E8%B6%85%E5%88%86%E8%BE%A8%E7%8E%87/"/>
+    
+  </entry>
+  
+</feed>
