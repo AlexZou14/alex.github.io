@@ -126,7 +126,7 @@ body::before {
   height: 100%;
   z-index: -1;
   opacity: 0.8;
-  background-image: url("/img/bg.jpg");
+  background-image: url("https://cdn.jsdelivr.net/gh/AlexZou14/CDN/img/bg.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -1429,7 +1429,7 @@ td {
   left: 0;
   width: 20rem;
   background: #fff;
-  background-image: url("/img/bg1.jpg");
+  background-image: url("https://cdn.jsdelivr.net/gh/AlexZou14/CDN/img/bg1.jpg");
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom 3rem center;
