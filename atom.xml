@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://alexzou14.github.io/"/>
-  <updated>2020-04-02T09:34:32.089Z</updated>
+  <updated>2020-04-05T16:54:36.505Z</updated>
   <id>http://alexzou14.github.io/</id>
   
   <author>
@@ -15,6 +15,36 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Deeply-Recursive Convolutional Network for Image Super-Resolution论文阅读笔记</title>
+    <link href="http://alexzou14.github.io/2020/04/05/DRCN/"/>
+    <id>http://alexzou14.github.io/2020/04/05/DRCN/</id>
+    <published>2020-04-05T15:41:36.000Z</published>
+    <updated>2020-04-05T16:54:36.505Z</updated>
+    
+    <content type="html"><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.css"><script src="https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1.2/dist/Meting.min.js"></script><h3 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h3><p>本文提出了使用深度递归卷积网络（DRCN）的图像超分辨率方法（SR）。 DRCN有一个非常深的递归层（最多16个递归）。增加递归深度可以提高性能，而不会为附加卷积引入新参数。由于网络特别深，所以存在梯度爆炸的问题，无法用标准梯度下降来学习。作者就利用率跳跃连接和递归监督的方式解决了这一问题。</p><hr><h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>对于图像超分辨率（SR），卷积网络的感受野决定了可以利用的上下文信息的量来推断丢失的高频分量。由于SR是一个不定逆向问题，收集和分析更多的邻域像素可对恢复下采样后可能丢失的信息提供更多线索。各种计算机视觉任务的深度卷积网络（DCN）通常使用非常大的感受野，在扩展感受野的许多方法中，增加网络深度是一种可能的方式。利用大于1×1的过滤器大小的卷积（转换）层或者减少中间表示的维度的池层可以使用的。 这两种方法都有缺点：层引入更多的参数和池层。网络层通常丢弃一些像素级别的信息。<br>对于图像恢复问题，如超分辨率和去噪，图像细节非常重要。因此，这些问题的大多数深度学习方法不能使用池化技术。通过添加新的网络层来增加深度，基本上会引入更多的参数。可能会出现两个问题。首先，很可能会过度拟合，需要更多的训练数据，使模型变得越来越大。<br>为了解决这些问题，作者使用深度递归卷积网络（DRCN）。DRCN根据需要重复地使用相同的卷积层参数。参数的数量不会增加，而执行了更多的递归。作者发现用广泛使用的随机梯度下降法优化的DRCN不容易收敛。这是由于爆炸/消失的梯度。提出了一个高性能的模型结构，能够捕捉像素长程的依赖，在保持较小模型的情况下，有更宽的感受野。<br>作者提出两种方法来缓解训练的难度：对所有递归进行监督，使用从输入到重建层的跳跃连接。</p><hr><h3 id="Related-work"><a href="#Related-work" class="headerlink" title="Related work"></a>Related work</h3><h4 id="Single-Image-Super-Resolution"><a href="#Single-Image-Super-Resolution" class="headerlink" title="Single-Image Super-Resolution"></a>Single-Image Super-Resolution</h4><p>早期单一图像超分辨率早期使用插值的方法，但是效果很差，后面又提出了统计先验和内部patch方法，最近基于学习的方法SRCN的提出，证明了端到端的方法在SR问题上的可行性。</p><h4 id="Recursive-Neural-Network-in-Computer-Vision"><a href="#Recursive-Neural-Network-in-Computer-Vision" class="headerlink" title="Recursive Neural Network in Computer Vision"></a>Recursive Neural Network in Computer Vision</h4><p>递归神经网络在语义分割和特征提取上有很多的应用，但是在图像超分上还是没有应用。</p><hr><h3 id="Proposed-Method"><a href="#Proposed-Method" class="headerlink" title="Proposed Method"></a>Proposed Method</h3><h4 id="Basic-Model"><a href="#Basic-Model" class="headerlink" title="Basic Model"></a>Basic Model</h4><p>整个网络分三个部分，每个部分都只有一层隐层，只有inference 网络是递归的。<br>结构如下图：</p><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-04-05/5e89e70041905.png" alt="" loading="lazy"></p></blockquote><p><strong>Embedding network</strong>:用于从RGB和灰度图像产生feature map，相当于特征提取,可以用一下表达式表示：<br>\( H_{-1}=\max (0,W_{-1} \ast \text{x}+b_{-1}) \)<br>\( H_{0}=\max (0,W_{0}\ast H_{-1}+b_{0}) \)<br>\( f_{1}(\text x)=H_0 \)<br>其中 \( f_1(\text{x}) \) 表示特征提取的输出。<br><strong>Inference network</strong>:解决超分辨率，相当于特征的非线性变换,其中 \( g(H)=\max(0,W \ast H+b) \) ，递归可以表示为：<br>\( H_d=g(H_{d-1})=\max(0,W \ast H_{d-1}+b) \),<br>故递归层输出为：\( f_2(H)=(g\circ g\circ g\circ \cdots \circ)g(H)=g^D(H) \)<br><strong>reconstruction network</strong>:用于把多个通道的转成三个通道的图片。重建层可以表达为：<br>$$H_{D+1}=\max(0,W_{D+1} \ast H_D+b_{D+1})$$<br>\( \hat{y}=\max(0,W_{D+2} \ast H_{D+1}+b_{D+2}) \)，\( f_3(H)=\hat{y} \)</p><p>这个模型的优点就是简单强大，缺点就是递归层数多的时候很难训练，会产生梯度爆炸。</p><h4 id="Advanced-Model"><a href="#Advanced-Model" class="headerlink" title="Advanced Model"></a>Advanced Model</h4><p>进阶网络结构如下：</p><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-04-05/5e89ed8fe90af.png" alt="" loading="lazy"></p></blockquote><p><strong>Recursive-Supervision</strong>：<br>为了解决梯度爆炸和寻找最佳递归次数的问题，提出了一种进一步的模型，所以递归上增加一个监督。监督可以表示为: </p><div>\[ \hat{ y}_d = f_3(\text{x},g^{(d)}(f_1(\text x))) \]</div>，其中 <div>\[ f_3(\text x, H_d)=\text x+f_3(H_d) \]</div>，<p>然后最终输出可以表达为: \( \hat{y}= \displaystyle\sum_{d=1}^D {w_d \cdot \hat{\text y}_d} \)</p><p><strong>skip-connection</strong>:使用该技巧的原因是超分辨率重建，低分辨率图像和网络输出的高分辨率图像有很高的相关性，而随着递归网络深度加深学习不到这种线性映射，所以通过该技巧可以使用大部分低分辨率信息用于重建高分辨率图像。</p><p>其中的\( H_1 \)到是\( H_D \)个共享参数的卷积层。DRCN将每一层的卷积结果都通过同一个Reconstruction Net得到一个重建结果，从而共得到D个重建结果，再把它们加权平均得到最终的输出。另外，受到ResNet的启发，DRCN通过skip connection将输入图像与\( H_d \)的输出相加后再作为Reconstruction Net的输入，相当于使Inference Net去学习高分辨率图像与低分辨率图像的差，即恢复图像的高频部分。</p><h4 id="Loss-function"><a href="#Loss-function" class="headerlink" title="Loss function"></a>Loss function</h4><p>中间层的loss function为：</p><div>    \[ l_1(\theta)= \displaystyle\sum_{d=1}^D \displaystyle\sum_{i=1}^N{ \dfrac{1}{2DN}|| \text y^{(i)}-\hat{\text y}_d^{(i)}||^2} \]</div>最后一层的loss function为：<div>    \[ l_2(\theta)= \displaystyle\sum_{i=1}^N{ \dfrac{1}{2N}|| \text y^{(i)}- \displaystyle\sum_{d=1}^D w_d \cdot \hat{\text y}_d^{(i)}||^2} \]</div><p>最终的loss function为：\( L(\theta)=\alpha l_1(\theta)+(1-\alpha)l_2(\theta)+\beta||\theta||^2 \)其中\( \alpha \)和\( \beta \)为可以调参数。</p><hr><h3 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h3><h4 id="Experiments-Details"><a href="#Experiments-Details" class="headerlink" title="Experiments Details"></a>Experiments Details</h4><p>实现细节待复现</p><h4 id="Study-of-Deep-Recursions"><a href="#Study-of-Deep-Recursions" class="headerlink" title="Study of Deep Recursions"></a>Study of Deep Recursions</h4><p>作者发现recursion d越大，psnr越高</p><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-04-05/5e89f8ca3719c.png" alt="" loading="lazy"></p></blockquote><p>并且发现如果不是recursion的unit全部连到final output，而是单一的某一层，效果会变差，证明了recursion ensemble的效果</p><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-04-05/5e89f945719f7.png" alt="" loading="lazy"></p></blockquote><h4 id="Comparisons-with-state-of-the-arts"><a href="#Comparisons-with-state-of-the-arts" class="headerlink" title="Comparisons with state-of-the-arts"></a>Comparisons with state-of-the-arts</h4><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-04-05/5e89f97d92e5b.png" alt="" loading="lazy"></p></blockquote><hr><h3 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions"></a>Conclusions</h3><ol><li>作者提出了一种使用深度递归卷积网络的超分辨率方法，有效地共享权重参数</li><li>使用递归监督和跳跃连接解决梯度爆炸和最佳递归层数问题</li><li>作者的方法在当时超分问题取得了较好的效果</li></ol>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;link rel=&quot;stylesheet&quot; class=&quot;aplayer-secondary-style-marker&quot; href=&quot;https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.css&quot;&gt;&lt;script 
+      
+    
+    </summary>
+    
+    
+      <category term="论文笔记" scheme="http://alexzou14.github.io/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/"/>
+    
+    
+      <category term="深度学习" scheme="http://alexzou14.github.io/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/"/>
+    
+      <category term="笔记" scheme="http://alexzou14.github.io/tags/%E7%AC%94%E8%AE%B0/"/>
+    
+      <category term="超分辨率" scheme="http://alexzou14.github.io/tags/%E8%B6%85%E5%88%86%E8%BE%A8%E7%8E%87/"/>
+    
+  </entry>
   
   <entry>
     <title>FSRNet：End-to-End Learning Face Super-Resolution with Facial Priors论文阅读笔记</title>
