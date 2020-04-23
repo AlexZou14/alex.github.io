@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://alexzou14.github.io/"/>
-  <updated>2020-04-23T11:15:18.941Z</updated>
+  <updated>2020-04-23T12:06:07.499Z</updated>
   <id>http://alexzou14.github.io/</id>
   
   <author>
@@ -15,6 +15,66 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Accelerating the Super-Resolution Convolutional Neural Network论文阅读笔记</title>
+    <link href="http://alexzou14.github.io/2020/04/23/FSRCNN/"/>
+    <id>http://alexzou14.github.io/2020/04/23/FSRCNN/</id>
+    <published>2020-04-23T11:47:42.000Z</published>
+    <updated>2020-04-23T12:06:07.499Z</updated>
+    
+    <content type="html"><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.css"><script src="https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1.2/dist/Meting.min.js"></script><h3 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h3><p>FSRCNN仍然是由港中文大学的Dong Chao, Tang XiaoOu等人做出来的文章，是SRCNN（将CNN引入超分辨率处理的开山之作）之后的又一力作。<br>该文章发表在CVPR2016上的文章，声称能在CPU上进行实时处理视频超分辨率。</p><hr><h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><h4 id="FSRCNN改进之处"><a href="#FSRCNN改进之处" class="headerlink" title="FSRCNN改进之处"></a>FSRCNN改进之处</h4><ol><li>并不是将三次插值后的图像当做输入，而是直接将LR图像丢入到网络中，最后选用deconv进行放大</li><li>在映射Layer进行了改进，先shrink再将其复原</li><li>更多的映射layer和更小的kernel</li><li>共享其中的mapping layer，如果需要训练不同的upscale model，最后仅需要fine-tuning最后的deconvLayer</li></ol><h4 id="SRCN中存在的问题"><a href="#SRCN中存在的问题" class="headerlink" title="SRCN中存在的问题"></a>SRCN中存在的问题</h4><ol><li>一般网络都直接对Interpolated LR投入到网络中，这便带来复杂的计算开销，假设要放大n倍，那么计算复杂度则上升到了n^2。</li><li>非线性层映射的参数太过臃肿。</li></ol><h4 id="FSRCN处理的方法"><a href="#FSRCN处理的方法" class="headerlink" title="FSRCN处理的方法"></a>FSRCN处理的方法</h4><ol><li>取消ILR输入，而是采用LR输入，在最后引用deconv </li><li>改进mapping layer</li></ol><h4 id="本文主要贡献"><a href="#本文主要贡献" class="headerlink" title="本文主要贡献"></a>本文主要贡献</h4><ol><li>设计漏斗结构的卷积网络，不需要预处理操作</li><li>速度提升</li><li>训练速度快，只要改变最后的解卷积层就可以。</li></ol><hr><h3 id="Related-work"><a href="#Related-work" class="headerlink" title="Related work"></a>Related work</h3><p>这里介绍过程和之前作者发的SRCN的大同小异，详细可以看SRCN的阅读笔记</p><hr><h3 id="Proposed-Method"><a href="#Proposed-Method" class="headerlink" title="Proposed Method"></a>Proposed Method</h3><h4 id="SRCNN和FSRCNN的对比图例"><a href="#SRCNN和FSRCNN的对比图例" class="headerlink" title="SRCNN和FSRCNN的对比图例"></a>SRCNN和FSRCNN的对比图例</h4><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-01-22/5e280945aa4df.png" alt="" loading="lazy"></p></blockquote><h4 id="Feature-extraction"><a href="#Feature-extraction" class="headerlink" title="Feature extraction"></a>Feature extraction</h4><p>在SRCNN中，feature extraction选的kernel size 为9，然而SRCNN是针对ILR（插值后的低分辨率图像）进行操作的。而FSRCNN则是对LR进行操作，因此在选取kernel的时候，可以选取小的一点。作者选取为5x5</p><h4 id="Shrinking"><a href="#Shrinking" class="headerlink" title="Shrinking"></a>Shrinking</h4><p>在mapping过程中，一般是将LR feature进行map到HR feature中，因此LR feature maps的维数一般非常高。作者通过选取1x1的卷积核进行降维，从而减少后面的计算量。</p><h4 id="Non-linear-mapping"><a href="#Non-linear-mapping" class="headerlink" title="Non-linear mapping"></a>Non-linear mapping</h4><p>在SRCNN中，作者选取了一个5x5的map layer，然而5x5会带来比较大的计算量，作者将选取3x3的kernel，通过m个3x3的卷积layer进行串联。</p><h4 id="Expanding"><a href="#Expanding" class="headerlink" title="Expanding"></a>Expanding</h4><p>作者发现低维度的HR dimension带来的重建效果并不是特别好，因此作者通过1x1的卷积layer，对HR dimension进行扩维，类似于Shrink的反操作。</p><h4 id="Deconvolution"><a href="#Deconvolution" class="headerlink" title="Deconvolution"></a>Deconvolution</h4><p>转置卷积则是实行上采样操作。这个操作可以看作是conv的逆操作，因为stride=k时的cov卷积操作会将feature map缩水k倍。所以stride为k的deconv则会将feature map进行放大k倍。</p><h4 id="PRelu"><a href="#PRelu" class="headerlink" title="PRelu"></a>PRelu</h4><p>作者定义了一个激活函数PRelu activation function: \( f(x_i)=\max(x_i; 0) + a_i \min(0; x_i)\)</p><h4 id="deconvolution-structure"><a href="#deconvolution-structure" class="headerlink" title="deconvolution structure"></a>deconvolution structure</h4><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-01-22/5e280a794129e.png" alt="" loading="lazy"></p></blockquote><hr><h3 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h3><h4 id="Experiments-Details"><a href="#Experiments-Details" class="headerlink" title="Experiments Details"></a>Experiments Details</h4><p>论文详细代码：<a href="http://mmlab.ie.cuhk.edu.hk/projects/FSRCNN.html" target="_blank" rel="noopener">http://mmlab.ie.cuhk.edu.hk/projects/FSRCNN.html</a><br>详细参数如下：</p><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-01-22/5e2809f39ec40.png" alt="" loading="lazy"></p></blockquote><h4 id="parameters-of-different-settings"><a href="#parameters-of-different-settings" class="headerlink" title="parameters of different settings"></a>parameters of different settings</h4><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-01-22/5e280aa5a295a.png" alt="" loading="lazy"></p></blockquote><h4 id="Comparisons-with-state-of-the-arts"><a href="#Comparisons-with-state-of-the-arts" class="headerlink" title="Comparisons with state-of-the-arts"></a>Comparisons with state-of-the-arts</h4><blockquote><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-01-22/5e280ade5491b.png" alt="" loading="lazy"></p></blockquote><hr><h3 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions"></a>Conclusions</h3><ul><li>在观察当前基于深度学习的SR模型的局限性的同时，我们探索了一种更有效的网络结构，以实现高运行速度而不损失恢复质量</li><li>重新设计SRCNN结构，设计了漏斗结构的卷积网络，不需要预处理操作，实现了这一目标，并实现了超过40倍的最终加速</li><li>在运行时间方面更优越。该模型可用于实时视频SR，并可为其他低层次视觉任务激励快速深度模型。</li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;link rel=&quot;stylesheet&quot; class=&quot;aplayer-secondary-style-marker&quot; href=&quot;https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.css&quot;&gt;&lt;script 
+      
+    
+    </summary>
+    
+    
+      <category term="论文笔记" scheme="http://alexzou14.github.io/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/"/>
+    
+    
+      <category term="深度学习" scheme="http://alexzou14.github.io/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/"/>
+    
+      <category term="笔记" scheme="http://alexzou14.github.io/tags/%E7%AC%94%E8%AE%B0/"/>
+    
+      <category term="超分辨率" scheme="http://alexzou14.github.io/tags/%E8%B6%85%E5%88%86%E8%BE%A8%E7%8E%87/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Second-order Attention Network for Single Image Super-Resolution论文阅读笔记</title>
+    <link href="http://alexzou14.github.io/2020/04/23/SAN/"/>
+    <id>http://alexzou14.github.io/2020/04/23/SAN/</id>
+    <published>2020-04-23T11:35:13.000Z</published>
+    <updated>2020-04-23T11:45:08.417Z</updated>
+    
+    <content type="html"><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.css"><script src="https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.js" class="aplayer-secondary-script-marker"></script><script class="meting-secondary-script-marker" src="https://cdn.jsdelivr.net/npm/meting@1.2/dist/Meting.min.js"></script><h3 id="Abstract"><a href="#Abstract" class="headerlink" title="Abstract"></a>Abstract</h3><p>   当时超分领域现有的基于深度卷积神经网络的方法主要专注于设计更深或者更宽的网络结构，却很少挖掘层间特征的相关性，从而降低了卷积神经网络的学习能力。这篇文章就提出了一个二阶注意力网络(SAN)来实现更强大的特征表达和特征相关学习。提出了一种新的可训练的二阶通道注意力(SOCA)模块，进行相关性学习。提出了一种非局部增强的残差组(NLRG)结构，捕获远距离空间上下文信息。</p><hr><h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>   本文在这部分介绍了单一超分问题存在不定性，并且很多的超分方法在近段时间提出。这篇论文说明了当时基于CNN的超分方法存在的局限性：</p><ul><li>大多数基于CNN的SR方法没有充分利用原始LR图像中的信息，从而导致相对较低的性能。</li><li>大多数现有的基于CNN的SR模型主要集中在设计一个更深或更宽的网络，以学习更具鉴别性的高级特征，而很少利用中间层的特征相关性，从而阻碍CNN的性能</li></ul><p>为了解决上面的局限性，作者提出了一种二阶信道注意机制，用于更好的特征相关学习。<br>本文主要贡献有：</p><ul><li>作者提出了一种用于精确图像SR的深度二阶注意网络（SAN）。在公共数据集上的广泛实验表明作者的方法效果很棒</li><li>作者提出了二阶信道注意机制，通过考虑高于一阶的特征统计量来自适应地重新标度特征。这种SOCA机制使我们的网络能够专注于更多的信息特征，并提高区分学习能力</li><li>作者提出了非局部增强剩余群结构来构建一个深度网络，该网络进一步结合了非局部操作来捕获空间上下文信息</li></ul><hr><h3 id="Related-work"><a href="#Related-work" class="headerlink" title="Related work"></a>Related work</h3><h4 id="CNN-based-SR-methods"><a href="#CNN-based-SR-methods" class="headerlink" title="CNN-based SR methods"></a>CNN-based SR methods</h4><p>   这部分作者主要介绍了当时大部分基于CNN方法的超分算法。</p><h4 id="Attention-mechanism"><a href="#Attention-mechanism" class="headerlink" title="Attention mechanism"></a>Attention mechanism</h4><p>   这部分作者主要介绍了当时在深度学习中应用的注意机制应用的都是一阶注意机制来进行统计特征，作者通过探索特征的二阶统计量，提出了一种深度二阶注意网络（SAN）。</p><hr><h3 id="Proposed-Method"><a href="#Proposed-Method" class="headerlink" title="Proposed Method"></a>Proposed Method</h3><h4 id="Network-structure"><a href="#Network-structure" class="headerlink" title="Network structure"></a>Network structure</h4><p><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-02-19/5e4cf99c19319.png" alt="" loading="lazy"><br>   如图所示，该网络包括四个部分：浅层特征提取，基于非局部增强残差组（NLRG）的深度特征提取，上采样模块，重建模块<br>首先通过一个卷积层提取浅层特征信息：\(F_0=H_{SF}(I_{LR})\)<br>F0作为NLRG输入，用于提取特征信息：\(F_{DF}=H_{NLRG}(F_0)\)<br>上采样特征：\(F_{\uparrow}=H_{\uparrow}(F_{DF})\)<br>重建模块：\(I_{SR}=H_R(F_{\uparrow})=H_{SAN}(I_{LR})\)<br>损失函数：\(L_1{\;}loss\)</p><h4 id="Non-locally-Enhanced-Residual-Group-NLRG"><a href="#Non-locally-Enhanced-Residual-Group-NLRG" class="headerlink" title="Non-locally Enhanced Residual Group (NLRG)"></a>Non-locally Enhanced Residual Group (NLRG)</h4><p>NLRG包括多个区域非局部模块RL-NL和一个同源残差组结构SSRG，SSRG又由G个局部原残差注意力模块（LSRAG）和一个卷积组成，同时使用了同源残差连接结构（SSC）。每一个LSRAG包括M个简化的带有本地源的跳跃连接的残差块。第g个LSRAG可以表示为：<br>\(F_g=W_{SSC}F_0+H_g(F_{g-1})\)<br>\(W_{SSC}\)表示卷积的权重，初始化为0，然后逐渐学会赋予浅的特征更多的权重，\(H_{g}()\)表示第g个LSRAG。<br>得到深度特征表示为：\(F_{DF}=W_{SSC}F_0+F_G\)</p><ul><li><p><strong>Region-level non-local module (RL-NL)</strong><br><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-02-19/5e4d0b1e64e92.png" alt="" loading="lazy"><br>将图像划分为k×k大小，每一个区域进行非局部操作。<br>对于全局非局部的好处：减少来计算量，对于低级任务区域非局部操作证明有效。</p></li><li><p><strong>Local-source residual attention group (LSRAG)</strong><br><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-02-19/5e4d0ae31cec3.png" alt="" loading="lazy"><br>使用了局部残差连接，在LSRAG末端有一个SOCA模块，即是二阶通道注意力机制。</p></li><li><p><strong>Second-order Channel Attention (SOCA)</strong><br><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-02-19/5e4d0c048d3d7.png" alt="" loading="lazy"><br>这个模块通过数学变换给所得到的特征进行二阶的通道注意。</p></li></ul><hr><h3 id="Experiment"><a href="#Experiment" class="headerlink" title="Experiment"></a>Experiment</h3><h4 id="Experiments-Details"><a href="#Experiments-Details" class="headerlink" title="Experiments Details"></a>Experiments Details</h4><p>具体实验细节可以参考<a href="https://github.com/daitao/SAN" target="_blank" rel="noopener">https://github.com/daitao/SAN</a><br>####Ablation Study<br><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-02-19/5e4d1bff63996.png" alt="" loading="lazy"><br>由上述结果可以看出二阶通道注意机制可以比较好的提升网络性能。</p><h4 id="Results-with-different-degradation"><a href="#Results-with-different-degradation" class="headerlink" title="Results with different degradation"></a>Results with different degradation</h4><ul><li><p><strong>Results with Bicubic Degradation (BI)</strong><br><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-02-19/5e4d1e818166e.png" alt="" loading="lazy"></p></li><li><p><strong>Results with Blur-downscale Degradation (BD)</strong><br><img src="http://sotavision.cn/showdoc/server/../Public/Uploads/2020-02-19/5e4d1ea3eb9c0.png" alt="" loading="lazy"></p></li></ul><hr><h3 id="Conclusions"><a href="#Conclusions" class="headerlink" title="Conclusions"></a>Conclusions</h3><ul><li>提出一个深的二阶注意力网络(Second-order Attention Network,SAN)</li><li>提出了一个非局部增强残差组(Non-locally Enhanced Residual Group,NLRG) ，提取深度特征，捕获长距离空间上下文信息(long-distance spatial contextual information)</li><li>提出了一个二阶通道注意力机制(Second-order Channel Attention,SOCA)以实现特征的相关性学习</li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;link rel=&quot;stylesheet&quot; class=&quot;aplayer-secondary-style-marker&quot; href=&quot;https://cdn.jsdelivr.net/npm/aplayer@1.10/dist/APlayer.min.css&quot;&gt;&lt;script 
+      
+    
+    </summary>
+    
+    
+      <category term="论文笔记" scheme="http://alexzou14.github.io/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/"/>
+    
+    
+      <category term="深度学习" scheme="http://alexzou14.github.io/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/"/>
+    
+      <category term="笔记" scheme="http://alexzou14.github.io/tags/%E7%AC%94%E8%AE%B0/"/>
+    
+      <category term="超分辨率" scheme="http://alexzou14.github.io/tags/%E8%B6%85%E5%88%86%E8%BE%A8%E7%8E%87/"/>
+    
+  </entry>
   
   <entry>
     <title>Recurrent Back-Projection Network for Video Super-Resolution论文阅读笔记</title>
